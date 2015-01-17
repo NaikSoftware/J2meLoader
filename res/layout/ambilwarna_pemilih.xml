@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AbsoluteLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="300dp"
+	android:layout_height="256dp"
+	android:clipChildren="false">
+
+	<yuku.ambilwarna.AmbilWarnaKotak
+		android:id="@+id/ambilwarna_viewKotak"
+		android:layout_x="0dp"
+		android:layout_y="0dp"
+		android:layout_width="256dp"
+		android:layout_height="256dp" />
+
+	<ImageView
+		android:id="@+id/ambilwarna_viewHue"
+		android:layout_x="270dp"
+		android:layout_y="0dp"
+		android:layout_width="30dp"
+		android:layout_height="256dp"
+		android:src="@drawable/ambilwarna_hue"
+		android:scaleType="fitXY" />
+
+	<ImageView
+		android:id="@+id/ambilwarna_panah"
+		android:layout_x="260dp"
+		android:layout_y="-4dp"
+		android:layout_width="8dp"
+		android:layout_height="9dp"
+		android:src="@drawable/ambilwarna_panah"
+		android:scaleType="matrix" />
+
+	<ImageView
+		android:id="@+id/ambilwarna_keker"
+		android:layout_x="-5dp"
+		android:layout_y="-5dp"
+		android:layout_width="11dp"
+		android:layout_height="11dp"
+		android:src="@drawable/ambilwarna_keker"
+		android:scaleType="matrix" />
+
+</AbsoluteLayout>

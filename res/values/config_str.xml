@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="_RESOLUTION_SEPARATOR">x</string>
+    <string name="_FONT_SEPARATOR">-</string>
+    <string name="_MINUS_ONE">-1</string>
+</resources>
