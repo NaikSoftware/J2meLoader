@@ -356,8 +356,9 @@ public class NavigationDrawerFragment extends Fragment {
 			fullPath.setText(currPath);
 			return;
 		}
-		int j = 0;// счетчик для names
+		int j = -1;// счетчик для names
 		for (String str : lsOutputDet) {
+			j++;
 			String arr[] = str.split("\\s+");
 			char id = arr[0].charAt(0);
 			if (id != '-' && id != 'd' && id != 'l') {
@@ -377,17 +378,17 @@ public class NavigationDrawerFragment extends Fragment {
 				listFolder.add(new FSItem(R.drawable.folder, names[j],
 						subheader.toString(), FSItem.Type.Folder));
 			} else {// если файл
+				String ext = getExtension(names[j]);// get extension from name
+				if (!mapExt.containsKey(ext)) {
+					continue; // пропускаем все ненужные файлы
+				}
+				int iconId = mapExt.get(ext);
 				subheader.append(arr[4]).append(' ').append(arr[5]);// date file
 				subheader.append(' ').append(calcSize(Long.parseLong(arr[3])));
-				String ext = getExtension(names[j]);// get extension from name
-				int iconId = R.drawable.file;
-				if (mapExt.containsKey(ext)) {
-					iconId = mapExt.get(ext);
-				}
+
 				listFile.add(new FSItem(iconId, names[j], subheader.toString(),
 						FSItem.Type.File));
 			}
-			j++;
 		}
 		Collections.sort(listFolder, comparator);
 		Collections.sort(listFile, comparator);
