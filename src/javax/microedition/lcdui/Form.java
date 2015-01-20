@@ -24,6 +24,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import javax.microedition.util.ContextHolder;
 
 public class Form extends Screen
 {
@@ -66,48 +67,80 @@ public class Form extends Screen
 		return 0;
 	}
 	
-	public int append(Item item)
+	public int append(final Item item)
 	{
 		items.add(item);
 		item.setOwnerForm(this);
 		
 		if(layout != null)
 		{
-			layout.addView(item.getItemView());
+			// Added by Naik run in UI thread
+			MicroActivity a = getParentActivity();
+			if (a != null) {
+				a.runOnUiThread(new Runnable() {
+						public void run() {
+							layout.addView(item.getItemView());
+						}
+					});
+			}
 		}
 		return 0;
 	}
 	
-	public void insert(int index, Item item)
+	public void insert(final int index, final Item item)
 	{
 		items.add(index, item);
 		item.setOwnerForm(this);
 		
 		if(layout != null)
 		{
-			layout.addView(item.getItemView(), index);
+			// Added by Naik run in UI thread
+			MicroActivity a = getParentActivity();
+			if (a != null) {
+				a.runOnUiThread(new Runnable() {
+						public void run() {
+							layout.addView(item.getItemView(), index);
+						}
+				});
+			}
 		}
 	}
 	
-	public void set(int index, Item item)
+	public void set(final int index, final Item item)
 	{
 		items.set(index, item).setOwnerForm(null);
 		item.setOwnerForm(this);
 		
 		if(layout != null)
 		{
-			layout.removeViewAt(index);
-			layout.addView(item.getItemView(), index);
+			// Added by Naik run in UI thread
+			MicroActivity a = getParentActivity();
+			if (a != null) {
+				a.runOnUiThread(new Runnable() {
+						public void run() {
+							layout.removeViewAt(index);
+							layout.addView(item.getItemView(), index);
+						}
+				});
+			}
 		}
 	}
 	
-	public void delete(int index)
+	public void delete(final int index)
 	{
 		items.remove(index).setOwnerForm(null);
 		
 		if(layout != null)
 		{
-			layout.removeViewAt(index);
+			// Added by Naik run in UI thread
+			MicroActivity a = getParentActivity();
+			if (a != null) {
+				a.runOnUiThread(new Runnable() {
+						public void run() {
+							layout.removeViewAt(index);
+						}
+					});
+			}
 		}
 	}
 	
@@ -122,7 +155,15 @@ public class Form extends Screen
 		
 		if(layout != null)
 		{
-			layout.removeAllViews();
+			// Added by Naik run in UI thread
+			MicroActivity a = getParentActivity();
+			if (a != null) {
+				a.runOnUiThread(new Runnable() {
+					public void run() {
+			    		layout.removeAllViews();
+					}
+				});
+			}
 		}
 	}
 	

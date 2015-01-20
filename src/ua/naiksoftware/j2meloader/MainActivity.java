@@ -107,14 +107,18 @@ public class MainActivity extends ActionBarActivity implements
 	public void updateApps() {
 		apps.clear();
 		AppItem item;
+		String author = getString(R.string.author);
+		String version = getString(R.string.version);
 		String[] appFolders = new File(pathConverted).list();
 		if (!(appFolders == null)) {
 			for (String appFolder : appFolders) {
 				TreeMap<String, String> params = FileUtils
 						.loadManifest(new File(pathConverted + appFolder
-								+ ConfigActivity.MIDLET_DEX_FILE + ".conf"));
+								+ ConfigActivity.MIDLET_CONF_FILE));
 				item = new AppItem(R.drawable.app_default_icon,
-						params.get("MIDlet-Name"));
+						params.get("MIDlet-Name"), 
+						author + params.get("MIDlet-Vendor"),
+						version + params.get("MIDlet-Version"));
 				item.setPath(pathConverted + appFolder);
 				apps.add(item);
 			}

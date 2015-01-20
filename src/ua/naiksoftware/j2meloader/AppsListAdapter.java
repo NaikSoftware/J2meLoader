@@ -41,6 +41,8 @@ public class AppsListAdapter extends BaseAdapter {
             holder = new  ViewHolder();
             holder.icon = (ImageView) view.findViewById(R.id.list_image);
             holder.name = (TextView) view.findViewById(R.id.list_title);
+			holder.author = (TextView) view.findViewById(R.id.list_author);
+			holder.version = (TextView) view.findViewById(R.id.list_version);
             view.setTag(holder);
         } else {
         	holder = (ViewHolder) view.getTag();
@@ -49,6 +51,8 @@ public class AppsListAdapter extends BaseAdapter {
 
         holder.icon.setImageResource(item.getImageId());
         holder.name.setText(item.getTitle());
+		holder.author.setText(item.getAuthor());
+		holder.version.setText(item.getVersion());
         
         return view;
     }
@@ -56,6 +60,7 @@ public class AppsListAdapter extends BaseAdapter {
 	private static class ViewHolder {
 		ImageView icon;
 		TextView name;
-		TextView descr;
+		TextView author;
+		TextView version;
 	}
 }

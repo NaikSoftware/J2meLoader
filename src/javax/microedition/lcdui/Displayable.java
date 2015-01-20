@@ -23,6 +23,7 @@ import javax.microedition.lcdui.event.CommandActionEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import javax.microedition.util.ContextHolder;
 
 public abstract class Displayable
 {
@@ -184,5 +185,15 @@ public abstract class Displayable
 	public void postEvent(Event event)
 	{
 		queue.postEvent(event);
+	}
+	
+	// Added by Naik
+	public int getWidth() {
+		return ContextHolder.getDisplayWidth();
+	}
+	
+	// Added by Naik
+	public int getHeight() {
+		return ContextHolder.getDisplayHeight();
 	}
 }

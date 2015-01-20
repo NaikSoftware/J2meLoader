@@ -8,11 +8,15 @@ public class AppItem {
 
     private int imageId;
     private String title;
+	private String author;
+	private String version;
 	private String path;
 
-    public AppItem(int imageId_, String title_) {
+    public AppItem(int imageId_, String title_, String author_, String version_) {
         imageId = imageId_;
         title = title_;
+		author = author_;
+		version = version_;
     }
 
 	public void setPath(String p) {
@@ -38,4 +42,12 @@ public class AppItem {
     public int getImageId() {
         return imageId;
     }
+	
+	public String getAuthor() {
+		return author;
+	}
+	
+	public String getVersion() {
+		return version;
+	}
 }

@@ -55,23 +55,22 @@ public class JarConverter extends AsyncTask<String, String, Boolean> {
 		File appConverted = new File(pathConverted + appDir);
 		FileUtils.deleteDirectory(appConverted);
 		appConverted.mkdirs();
-		dirForJAssist.mkdir();
-		//workJavassist(dirTmp.getPath());
-		Log.d(tag, "replace OK");
+		// dirForJAssist.mkdir();
+		// workModifyClass(dirTmp.getPath()); // MODIFY
+		// Log.d(tag, "-------\n\nreplace OK");
 		// Convert to dex
 		Log.d(tag, "appConverted=" + appConverted.getPath());
 		Main.main(new String[] {
 				"--dex",
 				"--output=" + appConverted.getPath()
 						+ ConfigActivity.MIDLET_DEX_FILE,
-				/*dirForJAssist.getPath()*/ pathToJar});
+				/* dirForJAssist.getPath() */pathToJar });
 		File conf = new File(dirTmp, "/META-INF/MANIFEST.MF");
 		if (!conf.exists()) {
 			err = "Manifest not exists: " + conf.getPath();
 			return false;
 		}
-		conf.renameTo(new File(appConverted, ConfigActivity.MIDLET_DEX_FILE
-				+ ".conf"));
+		conf.renameTo(new File(appConverted, ConfigActivity.MIDLET_CONF_FILE));
 		// Extract other resources from jar.
 		FileUtils.moveFiles(dirTmp.getPath(), pathConverted + appDir
 				+ ConfigActivity.MIDLET_RES_DIR, new FilenameFilter() {
@@ -86,93 +85,6 @@ public class JarConverter extends AsyncTask<String, String, Boolean> {
 		});
 		FileUtils.deleteDirectory(dirTmp);
 		return true;
-	}
-
-	private void workJavassist(final String path) {
-		Log.d(tag, "WORK_JAVAASSIST");
-		Log.d(tag, "workJavassist(" + path + ")");
-		File dir = new File(path);
-		dir.mkdir();
-		File[] classes = dir.listFiles(new FilenameFilter() {
-			public boolean accept(File dir, String fname) {
-				// Log.d(tag, "accept " + dir + "/" + fname);
-				if (fname.endsWith(".class")) {
-					return true;
-				} else if (new File(dir, fname).isDirectory()) {
-					// Log.d(tag, "accept recursive call");
-					if (!dir.getPath().contains("_converted_classes")) {
-						workJavassist(path + "/" + fname);
-					}
-					return false;
-				} else {
-					return false;
-				}
-			}
-		});
-		// Javassist works
-		/*
-		 * ClassPool cp = ClassPool.getDefault();
-		 * cp.makeClass("java.lang.String");
-		 * cp.makeClass("java.io.InputStream"); try { cp.appendSystemPath();
-		 * cp.importPackage("javax.microedition.util.ContextHolder");
-		 * cp.makeClass(new FileInputStream(context.getApplicationInfo().dataDir
-		 * + "/api/ContextHolder.class")); } catch (RuntimeException e) {
-		 * Log.d(tag, e.toString()); } catch (IOException e) { Log.d(tag,
-		 * e.toString()); }
-		 */
-		for (File classFile : classes) {
-			String cl = classFile.getPath();
-			String clName = cl.replace(dirTmp.getPath() + "/", "")
-					.replace(".class", "").replace('/', '.');
-			Log.d(tag, "--------\n cl=" + cl);
-			Log.d(tag, "clName=" + clName);
-			try {
-				byte[] dataClass;
-				dataClass = ModifyClass.modifyClass(new FileInputStream(
-						classFile), "javax/microedition/util/ContextHolder");
-				String newPath = classFile.getPath().replace(dirTmp.getPath(),
-						dirForJAssist.getPath());
-				File newFile = new File(newPath);
-				Log.d(tag, "newPath=" + newPath);
-				newFile.getParentFile().mkdirs();
-				if (dataClass != null) {
-					Log.d(tag, "modify ok");
-					FileOutputStream fos = new FileOutputStream(newFile);
-					fos.write(dataClass, 0, dataClass.length);
-					fos.flush();
-					fos.close();
-				} else {
-					Log.d(tag, "modify not detected");
-					classFile.renameTo(newFile);
-				}
-			} catch (FileNotFoundException e) {
-				Log.d(tag, e.getMessage());
-			} catch (IOException e) {
-				Log.d(tag, e.getMessage());
-			}
-			/*
-			 * try { //Log.d(tag, "cls: " + classFile.getPath()); CtClass
-			 * ctClass = cp.makeClass(new FileInputStream(classFile));
-			 * Log.d(tag, "class: " + ctClass.getName()); CtMethod[] methods =
-			 * ctClass.getDeclaredMethods(); for (CtMethod ctMethod: methods) {
-			 * //Log.d(tag, "    method: " + ctMethod.getLongName());
-			 * ctMethod.instrument(new ExprEditor() {
-			 * 
-			 * @Override public void edit(MethodCall mcall) { //Log.d(tag,
-			 * "        call: " + mcall.getClassName() + "->" +
-			 * mcall.getMethodName()); if
-			 * (mcall.getClassName().equals(classRepl) &&
-			 * mcall.getMethodName().equals(methodRepl)) { Log.d(tag,
-			 * "replace call"); try {
-			 * mcall.replace("{$_ = ContextHolder.getResourceAsStream($$);}"); }
-			 * catch (CannotCompileException e) { Log.d(tag, e.toString());
-			 * e.printStackTrace(); } } } }); } } catch (CannotCompileException
-			 * e) { Log.d(tag, "1 " + e.getMessage()); } catch (RuntimeException
-			 * e) { Log.d(tag, "2 " + e.getMessage()); } catch (IOException e) {
-			 * Log.d(tag, "3 " + e.getMessage()); e.printStackTrace(System.err);
-			 * }
-			 */
-		}
 	}
 
 	@Override
@@ -199,7 +111,7 @@ public class JarConverter extends AsyncTask<String, String, Boolean> {
 			t = Toast.makeText(context,
 					context.getResources().getString(R.string.convert_complete)
 							+ " " + appDir, Toast.LENGTH_LONG);
-			((MainActivity)context).updateApps();
+			((MainActivity) context).updateApps();
 		} else {
 			t = Toast.makeText(context, err, Toast.LENGTH_LONG);
 

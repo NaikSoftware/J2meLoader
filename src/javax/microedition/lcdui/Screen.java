@@ -94,6 +94,7 @@ public abstract class Screen extends Displayable
 		{
 			Context context = getParentActivity();
 			
+			
 			layout = new LinearLayout(context);
 			layout.setOrientation(LinearLayout.VERTICAL);
 			

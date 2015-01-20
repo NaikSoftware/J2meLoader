@@ -16,10 +16,32 @@
 
 package javax.microedition.shell;
 
-import android.widget.*;
-import java.io.*;
-import javax.microedition.lcdui.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.TreeMap;
 
+import javax.microedition.lcdui.Canvas;
+import javax.microedition.lcdui.Command;
+import javax.microedition.lcdui.CommandListener;
+import javax.microedition.lcdui.Display;
+import javax.microedition.lcdui.Displayable;
+import javax.microedition.lcdui.Font;
+import javax.microedition.lcdui.MicroActivity;
+import javax.microedition.lcdui.XMLForm;
+import javax.microedition.lcdui.pointer.VirtualKeyboard;
+import javax.microedition.midlet.MIDlet;
+import javax.microedition.param.DataContainer;
+import javax.microedition.param.DataEditor;
+import javax.microedition.param.SharedPreferencesContainer;
+import javax.microedition.util.ContextHolder;
+
+import ua.naiksoftware.j2meloader.R;
+import ua.naiksoftware.util.FileUtils;
+import yuku.ambilwarna.AmbilWarnaDialog;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -28,24 +50,17 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.SeekBar;
 import dalvik.system.DexClassLoader;
 import filelog.Log;
-import java.util.ArrayList;
-import java.util.TreeMap;
-import javax.microedition.lcdui.pointer.VirtualKeyboard;
-import javax.microedition.midlet.MIDlet;
-import javax.microedition.param.DataContainer;
-import javax.microedition.param.DataEditor;
-import javax.microedition.param.SharedPreferencesContainer;
-import javax.microedition.util.ContextHolder;
-import ua.naiksoftware.j2meloader.MainActivity;
-import ua.naiksoftware.j2meloader.R;
-import ua.naiksoftware.util.FileUtils;
-import yuku.ambilwarna.AmbilWarnaDialog;
-import java.lang.reflect.*;
 
-public class ConfigActivity extends MicroActivity implements CommandListener, View.OnKeyListener, View.OnClickListener {
- 
+public class ConfigActivity extends MicroActivity implements CommandListener,
+		View.OnKeyListener, View.OnClickListener {
+
 	protected XMLForm form;
 
 	protected EditText tfScreenWidth;
@@ -87,10 +102,11 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 	public static String pathToMidletDir;
 	public static final String MIDLET_RES_DIR = "/res/";
 	public static final String MIDLET_DEX_FILE = "/converted.dex";
+	public static final String MIDLET_CONF_FILE = MIDLET_DEX_FILE + ".conf";
 
 	/*
-	 * <xml locale=en>../../../../res/values/strings.xml</xml>
-	 * <xml locale=ru>../../../../res/values-ru/strings.xml</xml>
+	 * <xml locale=en>../../../../res/values/strings.xml</xml> <xml
+	 * locale=ru>../../../../res/values-ru/strings.xml</xml>
 	 */
 
 	public String getString(int index, String token) {
@@ -101,56 +117,61 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 		String res = getString(index);
 
 		for (int i = 0; i < tokens.length; i++) {
-			res = res.replace("%" + (char)('A' + i), tokens[i]);
+			res = res.replace("%" + (char) ('A' + i), tokens[i]);
 		}
 
 		return res;
 	}
 
 	public void onCreate(Bundle savedInstanceState) {
-		
+
 		MIDlet.setMidletContext(this);
 
-		DataContainer params = new SharedPreferencesContainer("RunConfiguration", Context.MODE_WORLD_READABLE, this);
+		DataContainer params = new SharedPreferencesContainer(
+				"RunConfiguration", Context.MODE_WORLD_READABLE, this);
 
 		locale = params.getString("Locale", MIDlet.getDefaultLocale());
 		MIDlet.setLocale(locale);
 
 		form = new XMLForm(getApplicationInfo().name, R.layout.config_all);
 
-		form.addCommand(new Command(getString(R.string.START_CMD), Command.OK, 1));
-		form.addCommand(new Command(getString(R.string.RESET_CMD), Command.ITEM, 2));
-		form.addCommand(new Command(getString(R.string.CANCEL_CMD), Command.EXIT, 3));
+		form.addCommand(new Command(getString(R.string.START_CMD), Command.OK,
+				1));
+		form.addCommand(new Command(getString(R.string.RESET_CMD),
+				Command.ITEM, 2));
+		form.addCommand(new Command(getString(R.string.CANCEL_CMD),
+				Command.EXIT, 3));
 		form.setCommandListener(this);
 
 		setCurrent(form);
 
-		tfScreenWidth = (EditText)findViewById(R.id.tfScreenWidth);
-		tfScreenHeight = (EditText)findViewById(R.id.tfScreenHeight);
-		tfScreenBack = (EditText)findViewById(R.id.tfScreenBack);
-		cxScaleToFit = (CheckBox)findViewById(R.id.cxScaleToFit);
-		cxKeepAspectRatio = (CheckBox)findViewById(R.id.cxKeepAspectRatio);
-		cxFilter = (CheckBox)findViewById(R.id.cxFilter);
+		tfScreenWidth = (EditText) findViewById(R.id.tfScreenWidth);
+		tfScreenHeight = (EditText) findViewById(R.id.tfScreenHeight);
+		tfScreenBack = (EditText) findViewById(R.id.tfScreenBack);
+		cxScaleToFit = (CheckBox) findViewById(R.id.cxScaleToFit);
+		cxKeepAspectRatio = (CheckBox) findViewById(R.id.cxKeepAspectRatio);
+		cxFilter = (CheckBox) findViewById(R.id.cxFilter);
 
-		tfFontSizeSmall = (EditText)findViewById(R.id.tfFontSizeSmall);
-		tfFontSizeMedium = (EditText)findViewById(R.id.tfFontSizeMedium);
-		tfFontSizeLarge = (EditText)findViewById(R.id.tfFontSizeLarge);
-		cxFontSizeInSP = (CheckBox)findViewById(R.id.cxFontSizeInSP);
+		tfFontSizeSmall = (EditText) findViewById(R.id.tfFontSizeSmall);
+		tfFontSizeMedium = (EditText) findViewById(R.id.tfFontSizeMedium);
+		tfFontSizeLarge = (EditText) findViewById(R.id.tfFontSizeLarge);
+		cxFontSizeInSP = (CheckBox) findViewById(R.id.cxFontSizeInSP);
 
-		sbVKAlpha = (SeekBar)findViewById(R.id.sbVKAlpha);
-		tfVKHideDelay = (EditText)findViewById(R.id.tfVKHideDelay);
-		tfVKLayoutKeyCode = (EditText)findViewById(R.id.tfVKLayoutKeyCode);
-		tfVKFore = (EditText)findViewById(R.id.tfVKFore);
-		tfVKBack = (EditText)findViewById(R.id.tfVKBack);
-		tfVKSelFore = (EditText)findViewById(R.id.tfVKSelFore);
-		tfVKSelBack = (EditText)findViewById(R.id.tfVKSelBack);
-		tfVKOutline = (EditText)findViewById(R.id.tfVKOutline);
+		sbVKAlpha = (SeekBar) findViewById(R.id.sbVKAlpha);
+		tfVKHideDelay = (EditText) findViewById(R.id.tfVKHideDelay);
+		tfVKLayoutKeyCode = (EditText) findViewById(R.id.tfVKLayoutKeyCode);
+		tfVKFore = (EditText) findViewById(R.id.tfVKFore);
+		tfVKBack = (EditText) findViewById(R.id.tfVKBack);
+		tfVKSelFore = (EditText) findViewById(R.id.tfVKSelFore);
+		tfVKSelBack = (EditText) findViewById(R.id.tfVKSelBack);
+		tfVKOutline = (EditText) findViewById(R.id.tfVKOutline);
 
 		screenWidths = new ArrayList();
 		screenHeights = new ArrayList();
 		screenAdapter = new ArrayList();
 
-		fillScreenSizePresets(ContextHolder.getDisplayWidth(), ContextHolder.getDisplayHeight());
+		fillScreenSizePresets(ContextHolder.getDisplayWidth(),
+				ContextHolder.getDisplayHeight());
 
 		fontSmall = new ArrayList();
 		fontMedium = new ArrayList();
@@ -176,10 +197,11 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 
 		handler = new Handler();
 
-		resetMessage = new Runnable()
-		{
+		resetMessage = new Runnable() {
 			public void run() {
-				SharedPreferencesContainer params = new SharedPreferencesContainer("RunConfiguration", Context.MODE_WORLD_READABLE, ConfigActivity.this);
+				SharedPreferencesContainer params = new SharedPreferencesContainer(
+						"RunConfiguration", Context.MODE_WORLD_READABLE,
+						ConfigActivity.this);
 				params.edit().clear().commit();
 				params.close();
 
@@ -207,16 +229,20 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 			language = locale;
 		}
 
-		((Button)findViewById(R.id.cmdLanguage)).setText(getString(R.string.PREF_LANGUAGE, language));
+		((Button) findViewById(R.id.cmdLanguage)).setText(getString(
+				R.string.PREF_LANGUAGE, language));
 
-		applyConfiguration(/*new MIDlet()*/);// Настройка конфигурации перед запуском конструктора мидлета.
+		applyConfiguration(/* new MIDlet() */);// Настройка конфигурации перед
+												// запуском конструктора
+												// мидлета.
 		pathToMidletDir = getIntent().getDataString();
 
 		super.onCreate(savedInstanceState);
 	}
 
 	public void onPause() {
-		SharedPreferencesContainer params = new SharedPreferencesContainer("RunConfiguration", Context.MODE_WORLD_READABLE, this);
+		SharedPreferencesContainer params = new SharedPreferencesContainer(
+				"RunConfiguration", Context.MODE_WORLD_READABLE, this);
 
 		params.edit();
 		saveParams(params);
@@ -227,7 +253,8 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
-		fillScreenSizePresets(ContextHolder.getDisplayWidth(), ContextHolder.getDisplayHeight());
+		fillScreenSizePresets(ContextHolder.getDisplayWidth(),
+				ContextHolder.getDisplayHeight());
 	}
 
 	public void fillScreenSizePresets(int w, int h) {
@@ -264,7 +291,8 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 	public void addScreenSizePreset(int width, int height) {
 		screenWidths.add(width);
 		screenHeights.add(height);
-		screenAdapter.add(Integer.toString(width) + " x " + Integer.toString(height));
+		screenAdapter.add(Integer.toString(width) + " x "
+				+ Integer.toString(height));
 	}
 
 	public void addFontSizePreset(String title, int small, int medium, int large) {
@@ -275,52 +303,89 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 	}
 
 	public void loadParams(DataContainer params) {
-		tfScreenWidth.setText(Integer.toString(params.getInt("ScreenWidth", 240)));
-		tfScreenHeight.setText(Integer.toString(params.getInt("ScreenHeight", 320)));
-		tfScreenBack.setText(Integer.toHexString(params.getInt("ScreenBackgroundColor", 0xD0D0D0)).toUpperCase());
+		tfScreenWidth.setText(Integer.toString(params
+				.getInt("ScreenWidth", 240)));
+		tfScreenHeight.setText(Integer.toString(params.getInt("ScreenHeight",
+				320)));
+		tfScreenBack
+				.setText(Integer.toHexString(
+						params.getInt("ScreenBackgroundColor", 0xD0D0D0))
+						.toUpperCase());
 		cxScaleToFit.setChecked(params.getBoolean("ScreenScaleToFit", true));
-		cxKeepAspectRatio.setChecked(params.getBoolean("ScreenKeepAspectRatio", true));
+		cxKeepAspectRatio.setChecked(params.getBoolean("ScreenKeepAspectRatio",
+				true));
 		cxFilter.setChecked(params.getBoolean("ScreenFilter", true));
 
-		tfFontSizeSmall.setText(Integer.toString(params.getInt("FontSizeSmall", 18)));
-		tfFontSizeMedium.setText(Integer.toString(params.getInt("FontSizeMedium", 22)));
-		tfFontSizeLarge.setText(Integer.toString(params.getInt("FontSizeLarge", 26)));
-		cxFontSizeInSP.setChecked(params.getBoolean("FontApplyDimensions", false));
+		tfFontSizeSmall.setText(Integer.toString(params.getInt("FontSizeSmall",
+				18)));
+		tfFontSizeMedium.setText(Integer.toString(params.getInt(
+				"FontSizeMedium", 22)));
+		tfFontSizeLarge.setText(Integer.toString(params.getInt("FontSizeLarge",
+				26)));
+		cxFontSizeInSP.setChecked(params.getBoolean("FontApplyDimensions",
+				false));
 
 		sbVKAlpha.setProgress(params.getInt("VirtualKeyboardAlpha", 64));
-		tfVKHideDelay.setText(Integer.toString(params.getInt("VirtualKeyboardDelay", -1)));
-		tfVKLayoutKeyCode.setText(Integer.toString(params.getInt("VirtualKeyboardLayoutKeyCode", Canvas.convertAndroidKeyCode(KeyEvent.KEYCODE_MENU))));
-		tfVKBack.setText(Integer.toHexString(params.getInt("VirtualKeyboardColorBackground", 0xD0D0D0)).toUpperCase());
-		tfVKFore.setText(Integer.toHexString(params.getInt("VirtualKeyboardColorForeground", 0x000080)).toUpperCase());
-		tfVKSelBack.setText(Integer.toHexString(params.getInt("VirtualKeyboardColorBackgroundSelected", 0x000080)).toUpperCase());
-		tfVKSelFore.setText(Integer.toHexString(params.getInt("VirtualKeyboardColorForegroundSelected", 0xFFFFFF)).toUpperCase());
-		tfVKOutline.setText(Integer.toHexString(params.getInt("VirtualKeyboardColorOutline", 0xFFFFFF)).toUpperCase());
+		tfVKHideDelay.setText(Integer.toString(params.getInt(
+				"VirtualKeyboardDelay", -1)));
+		tfVKLayoutKeyCode.setText(Integer.toString(params.getInt(
+				"VirtualKeyboardLayoutKeyCode",
+				Canvas.convertAndroidKeyCode(KeyEvent.KEYCODE_MENU))));
+		tfVKBack.setText(Integer.toHexString(
+				params.getInt("VirtualKeyboardColorBackground", 0xD0D0D0))
+				.toUpperCase());
+		tfVKFore.setText(Integer.toHexString(
+				params.getInt("VirtualKeyboardColorForeground", 0x000080))
+				.toUpperCase());
+		tfVKSelBack.setText(Integer.toHexString(
+				params.getInt("VirtualKeyboardColorBackgroundSelected",
+						0x000080)).toUpperCase());
+		tfVKSelFore.setText(Integer.toHexString(
+				params.getInt("VirtualKeyboardColorForegroundSelected",
+						0xFFFFFF)).toUpperCase());
+		tfVKOutline.setText(Integer.toHexString(
+				params.getInt("VirtualKeyboardColorOutline", 0xFFFFFF))
+				.toUpperCase());
 	}
 
 	public void saveParams(DataEditor editor) {
 		try {
 			editor.putString("Locale", locale);
 
-			editor.putInt("ScreenWidth", Integer.parseInt(tfScreenWidth.getText().toString()));
-			editor.putInt("ScreenHeight", Integer.parseInt(tfScreenHeight.getText().toString()));
-			editor.putInt("ScreenBackgroundColor", Integer.parseInt(tfScreenBack.getText().toString(), 16));
+			editor.putInt("ScreenWidth",
+					Integer.parseInt(tfScreenWidth.getText().toString()));
+			editor.putInt("ScreenHeight",
+					Integer.parseInt(tfScreenHeight.getText().toString()));
+			editor.putInt("ScreenBackgroundColor",
+					Integer.parseInt(tfScreenBack.getText().toString(), 16));
 			editor.putBoolean("ScreenScaleToFit", cxScaleToFit.isChecked());
-			editor.putBoolean("ScreenKeepAspectRatio", cxKeepAspectRatio.isChecked());
+			editor.putBoolean("ScreenKeepAspectRatio",
+					cxKeepAspectRatio.isChecked());
 			editor.putBoolean("ScreenFilter", cxFilter.isChecked());
 
-			editor.putInt("FontSizeSmall", Integer.parseInt(tfFontSizeSmall.getText().toString()));
-			editor.putInt("FontSizeMedium", Integer.parseInt(tfFontSizeMedium.getText().toString()));
-			editor.putInt("FontSizeLarge", Integer.parseInt(tfFontSizeLarge.getText().toString()));
+			editor.putInt("FontSizeSmall",
+					Integer.parseInt(tfFontSizeSmall.getText().toString()));
+			editor.putInt("FontSizeMedium",
+					Integer.parseInt(tfFontSizeMedium.getText().toString()));
+			editor.putInt("FontSizeLarge",
+					Integer.parseInt(tfFontSizeLarge.getText().toString()));
 			editor.putBoolean("FontApplyDimensions", cxFontSizeInSP.isChecked());
 
 			editor.putInt("VirtualKeyboardAlpha", sbVKAlpha.getProgress());
-			editor.putInt("VirtualKeyboardDelay", Integer.parseInt(tfVKHideDelay.getText().toString()));
-			editor.putInt("VirtualKeyboardLayoutKeyCode", Integer.parseInt(tfVKLayoutKeyCode.getText().toString()));
-			editor.putInt("VirtualKeyboardColorBackground", Integer.parseInt(tfVKBack.getText().toString(), 16));
-			editor.putInt("VirtualKeyboardColorForeground", Integer.parseInt(tfVKFore.getText().toString(), 16));
-			editor.putInt("VirtualKeyboardColorBackgroundSelected", Integer.parseInt(tfVKSelBack.getText().toString(), 16));
-			editor.putInt("VirtualKeyboardColorForegroundSelected", Integer.parseInt(tfVKSelFore.getText().toString(), 16));
-			editor.putInt("VirtualKeyboardColorOutline", Integer.parseInt(tfVKOutline.getText().toString(), 16));
+			editor.putInt("VirtualKeyboardDelay",
+					Integer.parseInt(tfVKHideDelay.getText().toString()));
+			editor.putInt("VirtualKeyboardLayoutKeyCode",
+					Integer.parseInt(tfVKLayoutKeyCode.getText().toString()));
+			editor.putInt("VirtualKeyboardColorBackground",
+					Integer.parseInt(tfVKBack.getText().toString(), 16));
+			editor.putInt("VirtualKeyboardColorForeground",
+					Integer.parseInt(tfVKFore.getText().toString(), 16));
+			editor.putInt("VirtualKeyboardColorBackgroundSelected",
+					Integer.parseInt(tfVKSelBack.getText().toString(), 16));
+			editor.putInt("VirtualKeyboardColorForegroundSelected",
+					Integer.parseInt(tfVKSelFore.getText().toString(), 16));
+			editor.putInt("VirtualKeyboardColorOutline",
+					Integer.parseInt(tfVKOutline.getText().toString(), 16));
 
 			editor.apply();
 		} catch (Throwable t) {
@@ -328,16 +393,22 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 		}
 	}
 
-	public void applyConfiguration(/*MIDlet midlet*/) {
+	public void applyConfiguration(/* MIDlet midlet */) {
 		try {
-			int fontSizeSmall = Integer.parseInt(tfFontSizeSmall.getText().toString());
-			int fontSizeMedium = Integer.parseInt(tfFontSizeMedium.getText().toString());
-			int fontSizeLarge = Integer.parseInt(tfFontSizeLarge.getText().toString());
+			int fontSizeSmall = Integer.parseInt(tfFontSizeSmall.getText()
+					.toString());
+			int fontSizeMedium = Integer.parseInt(tfFontSizeMedium.getText()
+					.toString());
+			int fontSizeLarge = Integer.parseInt(tfFontSizeLarge.getText()
+					.toString());
 			boolean fontApplyDimensions = cxFontSizeInSP.isChecked();
 
-			int screenWidth = Integer.parseInt(tfScreenWidth.getText().toString());
-			int screenHeight = Integer.parseInt(tfScreenHeight.getText().toString());
-			int screenBackgroundColor = Integer.parseInt(tfScreenBack.getText().toString(), 16);
+			int screenWidth = Integer.parseInt(tfScreenWidth.getText()
+					.toString());
+			int screenHeight = Integer.parseInt(tfScreenHeight.getText()
+					.toString());
+			int screenBackgroundColor = Integer.parseInt(tfScreenBack.getText()
+					.toString(), 16);
 			boolean screenScaleToFit = cxScaleToFit.isChecked();
 			boolean screenKeepAspectRatio = cxKeepAspectRatio.isChecked();
 			boolean screenFilter = cxFilter.isChecked();
@@ -347,7 +418,8 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 			Font.setSize(Font.SIZE_LARGE, fontSizeLarge);
 			Font.setApplyDimensions(fontApplyDimensions);
 
-			Canvas.setVirtualSize(screenWidth, screenHeight, screenScaleToFit, screenKeepAspectRatio);
+			Canvas.setVirtualSize(screenWidth, screenHeight, screenScaleToFit,
+					screenKeepAspectRatio);
 			Canvas.setFilterBitmap(screenFilter);
 			Canvas.setBackgroundColor(screenBackgroundColor);
 
@@ -355,17 +427,23 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 			t.printStackTrace();
 		}
 	}
-	
+
 	private void setVirtualKeyboard(MIDlet midlet) {
 		int vkAlpha = sbVKAlpha.getProgress();
 		int vkDelay = Integer.parseInt(tfVKHideDelay.getText().toString());
-		int vkLayoutKeyCode = Integer.parseInt(tfVKLayoutKeyCode.getText().toString());
-		int vkColorBackground = Integer.parseInt(tfVKBack.getText().toString(), 16);
-		int vkColorForeground = Integer.parseInt(tfVKFore.getText().toString(), 16);
-		int vkColorBackgroundSelected = Integer.parseInt(tfVKSelBack.getText().toString(), 16);
-		int vkColorForegroundSelected = Integer.parseInt(tfVKSelFore.getText().toString(), 16);
-		int vkColorOutline = Integer.parseInt(tfVKOutline.getText().toString(), 16);
-		
+		int vkLayoutKeyCode = Integer.parseInt(tfVKLayoutKeyCode.getText()
+				.toString());
+		int vkColorBackground = Integer.parseInt(tfVKBack.getText().toString(),
+				16);
+		int vkColorForeground = Integer.parseInt(tfVKFore.getText().toString(),
+				16);
+		int vkColorBackgroundSelected = Integer.parseInt(tfVKSelBack.getText()
+				.toString(), 16);
+		int vkColorForegroundSelected = Integer.parseInt(tfVKSelFore.getText()
+				.toString(), 16);
+		int vkColorOutline = Integer.parseInt(tfVKOutline.getText().toString(),
+				16);
+
 		VirtualKeyboard vk = new VirtualKeyboard();
 
 		vk.setOverlayAlpha(vkAlpha);
@@ -373,7 +451,8 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 		vk.setLayoutEditKey(vkLayoutKeyCode);
 
 		try {
-			DataInputStream dis = new DataInputStream(ContextHolder.getContext().openFileInput("VirtualKeyboardLayout"));
+			DataInputStream dis = new DataInputStream(ContextHolder
+					.getContext().openFileInput("VirtualKeyboardLayout"));
 			vk.readLayout(dis);
 			dis.close();
 		} catch (FileNotFoundException fnfe) {
@@ -383,15 +462,19 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 
 		vk.setColor(VirtualKeyboard.BACKGROUND, vkColorBackground);
 		vk.setColor(VirtualKeyboard.FOREGROUND, vkColorForeground);
-		vk.setColor(VirtualKeyboard.BACKGROUND_SELECTED, vkColorBackgroundSelected);
-		vk.setColor(VirtualKeyboard.FOREGROUND_SELECTED, vkColorForegroundSelected);
+		vk.setColor(VirtualKeyboard.BACKGROUND_SELECTED,
+				vkColorBackgroundSelected);
+		vk.setColor(VirtualKeyboard.FOREGROUND_SELECTED,
+				vkColorForegroundSelected);
 		vk.setColor(VirtualKeyboard.OUTLINE, vkColorOutline);
 
-		VirtualKeyboard.LayoutListener listener = new VirtualKeyboard.LayoutListener()
-		{
+		VirtualKeyboard.LayoutListener listener = new VirtualKeyboard.LayoutListener() {
 			public void layoutChanged(VirtualKeyboard vk) {
 				try {
-					DataOutputStream dos = new DataOutputStream(ContextHolder.getContext().openFileOutput("VirtualKeyboardLayout", Context.MODE_WORLD_READABLE));
+					DataOutputStream dos = new DataOutputStream(ContextHolder
+							.getContext().openFileOutput(
+									"VirtualKeyboardLayout",
+									Context.MODE_WORLD_READABLE));
 					vk.writeLayout(dos);
 					dos.close();
 				} catch (IOException ioe) {
@@ -407,30 +490,30 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 	public void commandAction(Command c, Displayable dp) {
 
 		switch (c.getCommandType()) {
-			case Command.OK:
-				try {
-					// Теперь применяем конфигурацию к запускаемому мидлету.
-					midlet = loadMIDlet();
-					applyConfiguration();
-					setVirtualKeyboard(midlet);
+		case Command.OK:
+			try {
+				// Теперь применяем конфигурацию к запускаемому мидлету.
+				midlet = loadMIDlet();
+				applyConfiguration();
+				setVirtualKeyboard(midlet);
 
-					midlet.start();
-					//finish();
-				} catch (Throwable t) {
-					t.printStackTrace();
-				}
+				midlet.start();
+				// finish();
+			} catch (Throwable t) {
+				t.printStackTrace();
+			}
 
-				break;
+			break;
 
-			case Command.ITEM:
-				handler.post(resetMessage);
-				break;
+		case Command.ITEM:
+			handler.post(resetMessage);
+			break;
 
-			case Command.EXIT:
-				if (midlet != null) {
-					midlet.notifyDestroyed();
-				}
-				finish();
+		case Command.EXIT:
+			if (midlet != null) {
+				midlet.notifyDestroyed();
+			}
+			finish();
 		}
 	}
 
@@ -438,8 +521,10 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 	}
 
 	public boolean onKey(View v, int keyCode, KeyEvent event) {
-		if (v == tfVKLayoutKeyCode && (event.getFlags() & KeyEvent.FLAG_SOFT_KEYBOARD) == 0) {
-			tfVKLayoutKeyCode.setText(Integer.toString(Canvas.convertAndroidKeyCode(keyCode)));
+		if (v == tfVKLayoutKeyCode
+				&& (event.getFlags() & KeyEvent.FLAG_SOFT_KEYBOARD) == 0) {
+			tfVKLayoutKeyCode.setText(Integer.toString(Canvas
+					.convertAndroidKeyCode(keyCode)));
 			return true;
 		}
 
@@ -463,29 +548,31 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 		if (id == R.id.cmdScreenSizePresets) {
 			presets = screenAdapter.toArray(new String[0]);
 
-			presetListener = new DialogInterface.OnClickListener()
-			{
+			presetListener = new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
-					tfScreenWidth.setText(Integer.toString(screenWidths.get(which)));
-					tfScreenHeight.setText(Integer.toString(screenHeights.get(which)));
+					tfScreenWidth.setText(Integer.toString(screenWidths
+							.get(which)));
+					tfScreenHeight.setText(Integer.toString(screenHeights
+							.get(which)));
 				}
 			};
 		} else if (id == R.id.cmdFontSizePresets) {
 			presets = fontAdapter.toArray(new String[0]);
 
-			presetListener = new DialogInterface.OnClickListener()
-			{
+			presetListener = new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
-					tfFontSizeSmall.setText(Integer.toString(fontSmall.get(which)));
-					tfFontSizeMedium.setText(Integer.toString(fontMedium.get(which)));
-					tfFontSizeLarge.setText(Integer.toString(fontLarge.get(which)));
+					tfFontSizeSmall.setText(Integer.toString(fontSmall
+							.get(which)));
+					tfFontSizeMedium.setText(Integer.toString(fontMedium
+							.get(which)));
+					tfFontSizeLarge.setText(Integer.toString(fontLarge
+							.get(which)));
 				}
 			};
 		} else if (id == R.id.cmdLanguage) {
 			presets = getResources().getStringArray(R.array.languages);
 
-			presetListener = new DialogInterface.OnClickListener()
-			{
+			presetListener = new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
 					setLanguage(which);
 				}
@@ -493,10 +580,10 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 		} else if (id == R.id.cmdScreenBack) {
 			color = Integer.parseInt(tfScreenBack.getText().toString(), 16);
 
-			colorListener = new AmbilWarnaDialog.OnAmbilWarnaListener()
-			{
+			colorListener = new AmbilWarnaDialog.OnAmbilWarnaListener() {
 				public void onOk(AmbilWarnaDialog dialog, int color) {
-					tfScreenBack.setText(Integer.toHexString(color & 0xFFFFFF).toUpperCase());
+					tfScreenBack.setText(Integer.toHexString(color & 0xFFFFFF)
+							.toUpperCase());
 				}
 
 				public void onCancel(AmbilWarnaDialog dialog) {
@@ -505,10 +592,10 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 		} else if (id == R.id.cmdVKBack) {
 			color = Integer.parseInt(tfVKBack.getText().toString(), 16);
 
-			colorListener = new AmbilWarnaDialog.OnAmbilWarnaListener()
-			{
+			colorListener = new AmbilWarnaDialog.OnAmbilWarnaListener() {
 				public void onOk(AmbilWarnaDialog dialog, int color) {
-					tfVKBack.setText(Integer.toHexString(color & 0xFFFFFF).toUpperCase());
+					tfVKBack.setText(Integer.toHexString(color & 0xFFFFFF)
+							.toUpperCase());
 				}
 
 				public void onCancel(AmbilWarnaDialog dialog) {
@@ -517,10 +604,10 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 		} else if (id == R.id.cmdVKFore) {
 			color = Integer.parseInt(tfVKFore.getText().toString(), 16);
 
-			colorListener = new AmbilWarnaDialog.OnAmbilWarnaListener()
-			{
+			colorListener = new AmbilWarnaDialog.OnAmbilWarnaListener() {
 				public void onOk(AmbilWarnaDialog dialog, int color) {
-					tfVKFore.setText(Integer.toHexString(color & 0xFFFFFF).toUpperCase());
+					tfVKFore.setText(Integer.toHexString(color & 0xFFFFFF)
+							.toUpperCase());
 				}
 
 				public void onCancel(AmbilWarnaDialog dialog) {
@@ -529,10 +616,10 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 		} else if (id == R.id.cmdVKSelFore) {
 			color = Integer.parseInt(tfVKSelFore.getText().toString(), 16);
 
-			colorListener = new AmbilWarnaDialog.OnAmbilWarnaListener()
-			{
+			colorListener = new AmbilWarnaDialog.OnAmbilWarnaListener() {
 				public void onOk(AmbilWarnaDialog dialog, int color) {
-					tfVKSelFore.setText(Integer.toHexString(color & 0xFFFFFF).toUpperCase());
+					tfVKSelFore.setText(Integer.toHexString(color & 0xFFFFFF)
+							.toUpperCase());
 				}
 
 				public void onCancel(AmbilWarnaDialog dialog) {
@@ -541,10 +628,10 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 		} else if (id == R.id.cmdVKSelBack) {
 			color = Integer.parseInt(tfVKSelBack.getText().toString(), 16);
 
-			colorListener = new AmbilWarnaDialog.OnAmbilWarnaListener()
-			{
+			colorListener = new AmbilWarnaDialog.OnAmbilWarnaListener() {
 				public void onOk(AmbilWarnaDialog dialog, int color) {
-					tfVKSelBack.setText(Integer.toHexString(color & 0xFFFFFF).toUpperCase());
+					tfVKSelBack.setText(Integer.toHexString(color & 0xFFFFFF)
+							.toUpperCase());
 				}
 
 				public void onCancel(AmbilWarnaDialog dialog) {
@@ -553,10 +640,10 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 		} else if (id == R.id.cmdVKOutline) {
 			color = Integer.parseInt(tfVKOutline.getText().toString(), 16);
 
-			colorListener = new AmbilWarnaDialog.OnAmbilWarnaListener()
-			{
+			colorListener = new AmbilWarnaDialog.OnAmbilWarnaListener() {
 				public void onOk(AmbilWarnaDialog dialog, int color) {
-					tfVKOutline.setText(Integer.toHexString(color & 0xFFFFFF).toUpperCase());
+					tfVKOutline.setText(Integer.toHexString(color & 0xFFFFFF)
+							.toUpperCase());
 				}
 
 				public void onCancel(AmbilWarnaDialog dialog) {
@@ -574,43 +661,50 @@ public class ConfigActivity extends MicroActivity implements CommandListener, Vi
 			AlertDialog alert = builder.create();
 			alert.show();
 		} else if (colorListener != null) {
-			AmbilWarnaDialog dialog = new AmbilWarnaDialog(this, color | 0xFF000000, colorListener);
+			AmbilWarnaDialog dialog = new AmbilWarnaDialog(this,
+					color | 0xFF000000, colorListener);
 			dialog.show();
 		}
 	}
 
 	private MIDlet loadMIDlet() {
 		// Не работает, т.к. класс Class уже к этому моменту загружен в DVM
-		/*ClassPool cpool = ClassPool.getDefault(this);
-		cpool.appendSystemPath(this);
-		try {
-			CtClass ctClass = cpool.get("java.lang.Class");
-			CtMethod ctMethod = ctClass.getDeclaredMethod("getResourceAsStream");
-			ctMethod.setBody("{ return getResourceAsStream($1); }");
-			ctClass.toClass();
-		} catch (NotFoundException e) {
-			e.printStackTrace(System.err);
-		} catch (CannotCompileException e) {
-			e.printStackTrace(System.err);
-		}*/
+		/*
+		 * ClassPool cpool = ClassPool.getDefault(this);
+		 * cpool.appendSystemPath(this); try { CtClass ctClass =
+		 * cpool.get("java.lang.Class"); CtMethod ctMethod =
+		 * ctClass.getDeclaredMethod("getResourceAsStream");
+		 * ctMethod.setBody("{ return getResourceAsStream($1); }");
+		 * ctClass.toClass(); } catch (NotFoundException e) {
+		 * e.printStackTrace(System.err); } catch (CannotCompileException e) {
+		 * e.printStackTrace(System.err); }
+		 */
 
 		MIDlet midlet = null;
-        TreeMap<String, String> params = FileUtils.loadManifest(new File(pathToMidletDir + MIDLET_DEX_FILE + ".conf"));
-        DexClassLoader loader = new DexClassLoader(pathToMidletDir + ConfigActivity.MIDLET_DEX_FILE, getApplicationContext().getApplicationInfo().dataDir, null, getClassLoader());
-        try {
-            String mainClassParam = params.get("MIDlet-1");
-            String mainClass = mainClassParam.substring(mainClassParam.lastIndexOf(',') + 1).trim();
-            Log.d("inf", "load main: " + mainClass);
-            midlet = (MIDlet) loader.loadClass(mainClass).newInstance();// Тут вызывается конструктор по умолчанию.
-            midlet.initProps(params);
-        } catch (ClassNotFoundException ex) {
-            Log.d("err", ex.toString() + "/n" + ex.getMessage());
-        } catch (InstantiationException ex) {
-            Log.d("err", ex.toString() + "/n" + ex.getMessage());
-        } catch (IllegalAccessException ex) {
-            Log.d("err", ex.toString() + "/n" + ex.getMessage());
-        }
+		TreeMap<String, String> params = FileUtils.loadManifest(new File(
+				pathToMidletDir + MIDLET_CONF_FILE));
+		MIDlet.initProps(params);
+		String dex = pathToMidletDir + ConfigActivity.MIDLET_DEX_FILE;
+		ClassLoader loader = new MyClassLoader(dex,
+				getApplicationInfo().dataDir, null, getClassLoader(), pathToMidletDir + MIDLET_RES_DIR);
+		try {
+			String mainClassParam = params.get("MIDlet-1");
+			String mainClass = mainClassParam.substring(
+					mainClassParam.lastIndexOf(',') + 1).trim();
+			Log.d("inf", "load main: " + mainClass + " from dex:" + dex);
+			midlet = (MIDlet) loader.loadClass(mainClass).newInstance();// Тут
+																		// вызывается
+																		// конструктор
+																		// по
+																		// умолчанию.
+		} catch (ClassNotFoundException ex) {
+			Log.d("err", ex.toString() + "/n" + ex.getMessage());
+		} catch (InstantiationException ex) {
+			Log.d("err", ex.toString() + "/n" + ex.getMessage());
+		} catch (IllegalAccessException ex) {
+			Log.d("err", ex.toString() + "/n" + ex.getMessage());
+		}
 		return midlet;
-    }
+	}
 
 }

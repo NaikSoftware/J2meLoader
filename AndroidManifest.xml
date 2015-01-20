@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="ua.naiksoftware.j2meloader"
+    android:installLocation="preferExternal"
     android:versionCode="5"
-    android:versionName="2.3" android:installLocation="preferExternal">
+    android:versionName="2.3" >
 
     <uses-sdk
         android:minSdkVersion="10"
         android:targetSdkVersion="21" />
-    
+
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -26,12 +27,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-	
-	 <activity android:name="ua.naiksoftware.filechooser.FileChooser" />
         <activity android:name="javax.microedition.shell.ConfigActivity" />
         <activity android:name="javax.microedition.lcdui.Display$ScreenActivity" />
         <activity android:name="javax.microedition.lcdui.Display$CanvasActivity" />
-	
     </application>
 
 </manifest>
