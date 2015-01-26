@@ -5,7 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
-import javax.microedition.shell.ConfigActivity;
+import javax.microedition.shell.ConfScreen;
+import javax.microedition.util.ContextHolder;
 
 import ua.naiksoftware.util.FileUtils;
 import android.support.v7.app.ActionBarActivity;
@@ -37,7 +38,7 @@ public class MainActivity extends ActionBarActivity implements
 	private AppsListFragment appsListFragment;
 	private final List<AppItem> apps = new ArrayList<AppItem>();
 
-	/** путь к папке со сконвертированными приложениями */
+	/** Путь к папке со сконвертированными приложениями */
 	private String pathConverted;
 
 	private JarConverter converter;
@@ -114,17 +115,23 @@ public class MainActivity extends ActionBarActivity implements
 			for (String appFolder : appFolders) {
 				TreeMap<String, String> params = FileUtils
 						.loadManifest(new File(pathConverted + appFolder
-								+ ConfigActivity.MIDLET_CONF_FILE));
+								+ ConfScreen.MIDLET_CONF_FILE));
 				item = new AppItem(R.drawable.app_default_icon,
-						params.get("MIDlet-Name"), 
-						author + params.get("MIDlet-Vendor"),
-						version + params.get("MIDlet-Version"));
+						params.get("MIDlet-Name"), author
+								+ params.get("MIDlet-Vendor"), version
+								+ params.get("MIDlet-Version"));
 				item.setPath(pathConverted + appFolder);
 				apps.add(item);
 			}
 		}
 		AppsListAdapter adapter = new AppsListAdapter(this, apps);
 		appsListFragment.setListAdapter(adapter);
+	}
+
+	@Override
+	public void setTitle(CharSequence title) {
+		super.setTitle(title);
+		mTitle = title;
 	}
 
 }

@@ -11,7 +11,6 @@
         android:orientation="vertical" >
 
         <TextView
-            android:id="@+id/textView1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
@@ -19,7 +18,6 @@
             android:textAppearance="?android:attr/textAppearanceLarge" />
 
         <LinearLayout
-            android:id="@+id/linearLayoutInner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
 
@@ -37,7 +35,6 @@
             </EditText>
 
             <TextView
-                android:id="@+id/textView2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/_RESOLUTION_SEPARATOR"
@@ -157,11 +154,13 @@
                 android:inputType="number" />
         </LinearLayout>
 
-        <Button
+        <!--
+            Button
             android:id="@+id/cmdFontSizePresets"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/SIZE_PRESETS" />
+            android:text="@string/SIZE_PRESETS" /
+        -->
 
         <CheckBox
             android:id="@+id/cxFontSizeInSP"
@@ -169,25 +168,33 @@
             android:layout_height="wrap_content"
             android:text="@string/PREF_FONT_SIZE_IN_SP" />
 
-        <TextView
+        <!--
+            TextView
             android:id="@+id/textView15"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
             android:text="@string/PREF_MISC"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
+            android:textAppearance="?android:attr/textAppearanceLarge" /
+        -->
 
-        <Button
+
+        <!--
+            Button
             android:id="@+id/cmdLanguage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/PREF_LANGUAGE" />
+            android:text="@string/PREF_LANGUAGE" /
+        -->
 
-        <Button
+
+        <!--
+            Button
             android:id="@+id/button1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/EDIT_MANIFEST_CMD" />
+            android:text="@string/EDIT_MANIFEST_CMD" /
+        -->
 
         <TextView
             android:id="@+id/textView6"
@@ -390,6 +397,30 @@
                     android:hint="@string/PREF_COLOR_HINT" />
             </TableRow>
         </TableLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+            <Button
+                 android:id="@+id/btnRun"
+                 android:layout_height="wrap_content"
+                 android:layout_width="0px"
+                 android:layout_weight="1"
+                 android:text="@string/YES_CMD" />
+            <Button
+                 android:id="@+id/btnReset"
+                 android:layout_height="wrap_content"
+                 android:layout_width="0px"
+                 android:layout_weight="1"
+                 android:text="@string/RESET_CMD" />
+            <Button
+                 android:id="@+id/btnCancel"
+                 android:layout_height="wrap_content"
+                 android:layout_width="0px"
+                 android:layout_weight="1"
+                 android:text="@string/CANCEL_CMD" />
+        </LinearLayout>
     </LinearLayout>
 
 </ScrollView>

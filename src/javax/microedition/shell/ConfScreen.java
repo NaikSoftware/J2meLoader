@@ -26,12 +26,9 @@ import java.util.TreeMap;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Command;
-import javax.microedition.lcdui.CommandListener;
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Font;
-import javax.microedition.lcdui.MicroActivity;
-import javax.microedition.lcdui.XMLForm;
 import javax.microedition.lcdui.pointer.VirtualKeyboard;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.param.DataContainer;
@@ -39,29 +36,30 @@ import javax.microedition.param.DataEditor;
 import javax.microedition.param.SharedPreferencesContainer;
 import javax.microedition.util.ContextHolder;
 
+import ua.naiksoftware.j2meloader.AppItem;
 import ua.naiksoftware.j2meloader.R;
 import ua.naiksoftware.util.FileUtils;
 import yuku.ambilwarna.AmbilWarnaDialog;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.res.Configuration;
-import android.os.Bundle;
 import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnKeyListener;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.SeekBar;
-import dalvik.system.DexClassLoader;
 import filelog.Log;
 
-public class ConfigActivity extends MicroActivity implements CommandListener,
-		View.OnKeyListener, View.OnClickListener {
+public class ConfScreen extends Displayable implements OnClickListener,
+		OnKeyListener {
 
-	protected XMLForm form;
+	private Activity context;
+	private View view;
 
 	protected EditText tfScreenWidth;
 	protected EditText tfScreenHeight;
@@ -88,112 +86,75 @@ public class ConfigActivity extends MicroActivity implements CommandListener,
 	protected ArrayList<Integer> screenHeights;
 	protected ArrayList<String> screenAdapter;
 
-	protected ArrayList<Integer> fontSmall;
-	protected ArrayList<Integer> fontMedium;
-	protected ArrayList<Integer> fontLarge;
-	protected ArrayList<String> fontAdapter;
-
-	protected String locale;
-
 	protected Handler handler;
 	protected Runnable resetMessage;
 
-	private MIDlet midlet;
-	public static String pathToMidletDir;
+	private MIDlet runMidlet;
+	private MIDlet myMidlet;
+	private AppItem app;
 	public static final String MIDLET_RES_DIR = "/res/";
 	public static final String MIDLET_DEX_FILE = "/converted.dex";
 	public static final String MIDLET_CONF_FILE = MIDLET_DEX_FILE + ".conf";
 
-	/*
-	 * <xml locale=en>../../../../res/values/strings.xml</xml> <xml
-	 * locale=ru>../../../../res/values-ru/strings.xml</xml>
-	 */
-
-	public String getString(int index, String token) {
-		return getString(index).replace("%A", token);
+	public ConfScreen(MIDlet m, AppItem app) {
+		context = ContextHolder.getActivity();
+		this.myMidlet = m;
+		this.app = app;
+		create();
 	}
 
-	public String getString(int index, String[] tokens) {
-		String res = getString(index);
-
-		for (int i = 0; i < tokens.length; i++) {
-			res = res.replace("%" + (char) ('A' + i), tokens[i]);
-		}
-
-		return res;
-	}
-
-	public void onCreate(Bundle savedInstanceState) {
-
-		MIDlet.setMidletContext(this);
+	public void create() {
 
 		DataContainer params = new SharedPreferencesContainer(
-				"RunConfiguration", Context.MODE_WORLD_READABLE, this);
+				"RunConfiguration", Context.MODE_WORLD_READABLE, context);
 
-		locale = params.getString("Locale", MIDlet.getDefaultLocale());
-		MIDlet.setLocale(locale);
+		view = getDisplayableView();
 
-		form = new XMLForm(getApplicationInfo().name, R.layout.config_all);
+		addCommand(new Command(getString(R.string.START_CMD), Command.OK, 1));
+		addCommand(new Command(getString(R.string.RESET_CMD), Command.ITEM, 2));
+		addCommand(new Command(getString(R.string.CANCEL_CMD), Command.EXIT, 3));
 
-		form.addCommand(new Command(getString(R.string.START_CMD), Command.OK,
-				1));
-		form.addCommand(new Command(getString(R.string.RESET_CMD),
-				Command.ITEM, 2));
-		form.addCommand(new Command(getString(R.string.CANCEL_CMD),
-				Command.EXIT, 3));
-		form.setCommandListener(this);
+		tfScreenWidth = (EditText) view.findViewById(R.id.tfScreenWidth);
+		tfScreenHeight = (EditText) view.findViewById(R.id.tfScreenHeight);
+		tfScreenBack = (EditText) view.findViewById(R.id.tfScreenBack);
+		cxScaleToFit = (CheckBox) view.findViewById(R.id.cxScaleToFit);
+		cxKeepAspectRatio = (CheckBox) view
+				.findViewById(R.id.cxKeepAspectRatio);
+		cxFilter = (CheckBox) view.findViewById(R.id.cxFilter);
 
-		setCurrent(form);
+		tfFontSizeSmall = (EditText) view.findViewById(R.id.tfFontSizeSmall);
+		tfFontSizeMedium = (EditText) view.findViewById(R.id.tfFontSizeMedium);
+		tfFontSizeLarge = (EditText) view.findViewById(R.id.tfFontSizeLarge);
+		cxFontSizeInSP = (CheckBox) view.findViewById(R.id.cxFontSizeInSP);
 
-		tfScreenWidth = (EditText) findViewById(R.id.tfScreenWidth);
-		tfScreenHeight = (EditText) findViewById(R.id.tfScreenHeight);
-		tfScreenBack = (EditText) findViewById(R.id.tfScreenBack);
-		cxScaleToFit = (CheckBox) findViewById(R.id.cxScaleToFit);
-		cxKeepAspectRatio = (CheckBox) findViewById(R.id.cxKeepAspectRatio);
-		cxFilter = (CheckBox) findViewById(R.id.cxFilter);
+		sbVKAlpha = (SeekBar) view.findViewById(R.id.sbVKAlpha);
+		tfVKHideDelay = (EditText) view.findViewById(R.id.tfVKHideDelay);
+		tfVKLayoutKeyCode = (EditText) view
+				.findViewById(R.id.tfVKLayoutKeyCode);
+		tfVKFore = (EditText) view.findViewById(R.id.tfVKFore);
+		tfVKBack = (EditText) view.findViewById(R.id.tfVKBack);
+		tfVKSelFore = (EditText) view.findViewById(R.id.tfVKSelFore);
+		tfVKSelBack = (EditText) view.findViewById(R.id.tfVKSelBack);
+		tfVKOutline = (EditText) view.findViewById(R.id.tfVKOutline);
 
-		tfFontSizeSmall = (EditText) findViewById(R.id.tfFontSizeSmall);
-		tfFontSizeMedium = (EditText) findViewById(R.id.tfFontSizeMedium);
-		tfFontSizeLarge = (EditText) findViewById(R.id.tfFontSizeLarge);
-		cxFontSizeInSP = (CheckBox) findViewById(R.id.cxFontSizeInSP);
+		screenWidths = new ArrayList<Integer>();
+		screenHeights = new ArrayList<Integer>();
+		screenAdapter = new ArrayList<String>();
 
-		sbVKAlpha = (SeekBar) findViewById(R.id.sbVKAlpha);
-		tfVKHideDelay = (EditText) findViewById(R.id.tfVKHideDelay);
-		tfVKLayoutKeyCode = (EditText) findViewById(R.id.tfVKLayoutKeyCode);
-		tfVKFore = (EditText) findViewById(R.id.tfVKFore);
-		tfVKBack = (EditText) findViewById(R.id.tfVKBack);
-		tfVKSelFore = (EditText) findViewById(R.id.tfVKSelFore);
-		tfVKSelBack = (EditText) findViewById(R.id.tfVKSelBack);
-		tfVKOutline = (EditText) findViewById(R.id.tfVKOutline);
-
-		screenWidths = new ArrayList();
-		screenHeights = new ArrayList();
-		screenAdapter = new ArrayList();
-
-		fillScreenSizePresets(ContextHolder.getDisplayWidth(),
-				ContextHolder.getDisplayHeight());
-
-		fontSmall = new ArrayList();
-		fontMedium = new ArrayList();
-		fontLarge = new ArrayList();
-		fontAdapter = new ArrayList();
-
-		addFontSizePreset("128 x 128", 9, 13, 15);
-		addFontSizePreset("128 x 160", 13, 15, 20);
-		addFontSizePreset("176 x 220", 15, 18, 22);
-		addFontSizePreset("240 x 320", 18, 22, 26);
+		fillScreenSizePresets(Display.getWidth(), Display.getHeight());
 
 		tfVKLayoutKeyCode.setOnKeyListener(this);
 
-		findViewById(R.id.cmdScreenSizePresets).setOnClickListener(this);
-		findViewById(R.id.cmdFontSizePresets).setOnClickListener(this);
-		findViewById(R.id.cmdScreenBack).setOnClickListener(this);
-		findViewById(R.id.cmdVKBack).setOnClickListener(this);
-		findViewById(R.id.cmdVKFore).setOnClickListener(this);
-		findViewById(R.id.cmdVKSelBack).setOnClickListener(this);
-		findViewById(R.id.cmdVKSelFore).setOnClickListener(this);
-		findViewById(R.id.cmdVKOutline).setOnClickListener(this);
-		findViewById(R.id.cmdLanguage).setOnClickListener(this);
+		view.findViewById(R.id.cmdScreenSizePresets).setOnClickListener(this);
+		view.findViewById(R.id.cmdScreenBack).setOnClickListener(this);
+		view.findViewById(R.id.cmdVKBack).setOnClickListener(this);
+		view.findViewById(R.id.cmdVKFore).setOnClickListener(this);
+		view.findViewById(R.id.cmdVKSelBack).setOnClickListener(this);
+		view.findViewById(R.id.cmdVKSelFore).setOnClickListener(this);
+		view.findViewById(R.id.cmdVKOutline).setOnClickListener(this);
+		view.findViewById(R.id.btnRun).setOnClickListener(this);
+		view.findViewById(R.id.btnReset).setOnClickListener(this);
+		view.findViewById(R.id.btnCancel).setOnClickListener(this);
 
 		handler = new Handler();
 
@@ -201,7 +162,7 @@ public class ConfigActivity extends MicroActivity implements CommandListener,
 			public void run() {
 				SharedPreferencesContainer params = new SharedPreferencesContainer(
 						"RunConfiguration", Context.MODE_WORLD_READABLE,
-						ConfigActivity.this);
+						context);
 				params.edit().clear().commit();
 				params.close();
 
@@ -211,50 +172,22 @@ public class ConfigActivity extends MicroActivity implements CommandListener,
 
 		loadParams(params);
 
-		String[] locales = getResources().getStringArray(R.array.locales);
-		int index = -1;
+		applyConfiguration();
+	}
 
-		for (int i = 0; i < locales.length; i++) {
-			if (locales[i].equalsIgnoreCase(locale)) {
-				index = i;
-				break;
-			}
-		}
+	private String getString(int resId) {
+		return context.getString(resId);
+	}
 
-		String language;
-
-		if (index >= 0) {
-			language = getResources().getStringArray(R.array.languages)[index];
+	@Override
+	public View getDisplayableView() {
+		View v;
+		if (view == null) {
+			v = ContextHolder.getInflater().inflate(R.layout.config_all, null);
 		} else {
-			language = locale;
+			v = view;
 		}
-
-		((Button) findViewById(R.id.cmdLanguage)).setText(getString(
-				R.string.PREF_LANGUAGE, language));
-
-		applyConfiguration(/* new MIDlet() */);// Настройка конфигурации перед
-												// запуском конструктора
-												// мидлета.
-		pathToMidletDir = getIntent().getDataString();
-
-		super.onCreate(savedInstanceState);
-	}
-
-	public void onPause() {
-		SharedPreferencesContainer params = new SharedPreferencesContainer(
-				"RunConfiguration", Context.MODE_WORLD_READABLE, this);
-
-		params.edit();
-		saveParams(params);
-		params.close();
-
-		super.onPause();
-	}
-
-	public void onConfigurationChanged(Configuration newConfig) {
-		super.onConfigurationChanged(newConfig);
-		fillScreenSizePresets(ContextHolder.getDisplayWidth(),
-				ContextHolder.getDisplayHeight());
+		return v;
 	}
 
 	public void fillScreenSizePresets(int w, int h) {
@@ -293,13 +226,6 @@ public class ConfigActivity extends MicroActivity implements CommandListener,
 		screenHeights.add(height);
 		screenAdapter.add(Integer.toString(width) + " x "
 				+ Integer.toString(height));
-	}
-
-	public void addFontSizePreset(String title, int small, int medium, int large) {
-		fontSmall.add(small);
-		fontMedium.add(medium);
-		fontLarge.add(large);
-		fontAdapter.add(title);
 	}
 
 	public void loadParams(DataContainer params) {
@@ -348,10 +274,13 @@ public class ConfigActivity extends MicroActivity implements CommandListener,
 				.toUpperCase());
 	}
 
-	public void saveParams(DataEditor editor) {
-		try {
-			editor.putString("Locale", locale);
+	public void saveParams() {
+		SharedPreferencesContainer params = new SharedPreferencesContainer(
+				"RunConfiguration", Context.MODE_WORLD_READABLE, context);
 
+		DataEditor editor = params.edit();
+
+		try {
 			editor.putInt("ScreenWidth",
 					Integer.parseInt(tfScreenWidth.getText().toString()));
 			editor.putInt("ScreenHeight",
@@ -391,9 +320,17 @@ public class ConfigActivity extends MicroActivity implements CommandListener,
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
+		params.close();
 	}
 
-	public void applyConfiguration(/* MIDlet midlet */) {
+	/**
+	 * Настройка конфигурации перед запуском мидлета. Нужно вызывать каждый раз
+	 * при запуске (перезапуске) мидлета, т.к. конфигурация статична (одна для
+	 * всех одновременно запущеных мидлетов). Индивидуальные настройки каждого
+	 * мидлета хранятся прямо в этом классе. Поэтому нужно хранить ссылку на
+	 * него, и при событии start/resume вызывать этот метод.
+	 */
+	public void applyConfiguration() {
 		try {
 			int fontSizeSmall = Integer.parseInt(tfFontSizeSmall.getText()
 					.toString());
@@ -428,6 +365,12 @@ public class ConfigActivity extends MicroActivity implements CommandListener,
 		}
 	}
 
+	/**
+	 * Установку виртуальной клавиатуры можно выполнить всего однин раз для
+	 * каждого мидлета (т.к. создается отдельный Display).
+	 * 
+	 * @param midlet
+	 */
 	private void setVirtualKeyboard(MIDlet midlet) {
 		int vkAlpha = sbVKAlpha.getProgress();
 		int vkDelay = Integer.parseInt(tfVKHideDelay.getText().toString());
@@ -482,44 +425,14 @@ public class ConfigActivity extends MicroActivity implements CommandListener,
 				}
 			}
 		};
-		// FIX ???
 		vk.setLayoutListener(listener);
 		Display.getDisplay(midlet).setOverlay(vk);
-	}
-
-	public void commandAction(Command c, Displayable dp) {
-
-		switch (c.getCommandType()) {
-		case Command.OK:
-			try {
-				// Теперь применяем конфигурацию к запускаемому мидлету.
-				midlet = loadMIDlet();
-				applyConfiguration();
-				setVirtualKeyboard(midlet);
-
-				midlet.start();
-				// finish();
-			} catch (Throwable t) {
-				t.printStackTrace();
-			}
-
-			break;
-
-		case Command.ITEM:
-			handler.post(resetMessage);
-			break;
-
-		case Command.EXIT:
-			if (midlet != null) {
-				midlet.notifyDestroyed();
-			}
-			finish();
-		}
 	}
 
 	public void onNothingSelected(AdapterView<?> parent) {
 	}
 
+	@Override
 	public boolean onKey(View v, int keyCode, KeyEvent event) {
 		if (v == tfVKLayoutKeyCode
 				&& (event.getFlags() & KeyEvent.FLAG_SOFT_KEYBOARD) == 0) {
@@ -531,11 +444,7 @@ public class ConfigActivity extends MicroActivity implements CommandListener,
 		return false;
 	}
 
-	public void setLanguage(int which) {
-		locale = getResources().getStringArray(R.array.locales)[which];
-		restart();
-	}
-
+	@Override
 	public void onClick(View v) {
 		String[] presets = null;
 		DialogInterface.OnClickListener presetListener = null;
@@ -554,27 +463,6 @@ public class ConfigActivity extends MicroActivity implements CommandListener,
 							.get(which)));
 					tfScreenHeight.setText(Integer.toString(screenHeights
 							.get(which)));
-				}
-			};
-		} else if (id == R.id.cmdFontSizePresets) {
-			presets = fontAdapter.toArray(new String[0]);
-
-			presetListener = new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-					tfFontSizeSmall.setText(Integer.toString(fontSmall
-							.get(which)));
-					tfFontSizeMedium.setText(Integer.toString(fontMedium
-							.get(which)));
-					tfFontSizeLarge.setText(Integer.toString(fontLarge
-							.get(which)));
-				}
-			};
-		} else if (id == R.id.cmdLanguage) {
-			presets = getResources().getStringArray(R.array.languages);
-
-			presetListener = new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-					setLanguage(which);
 				}
 			};
 		} else if (id == R.id.cmdScreenBack) {
@@ -649,54 +537,59 @@ public class ConfigActivity extends MicroActivity implements CommandListener,
 				public void onCancel(AmbilWarnaDialog dialog) {
 				}
 			};
+		} else if (id == R.id.btnRun) {// Запуск мидлета
+			try {
+				runMidlet = loadMIDlet();
+				// Теперь применяем конфигурацию к запускаемому мидлету.
+				applyConfiguration();
+				setVirtualKeyboard(runMidlet);
+
+				runMidlet.start(app);
+
+			} catch (Throwable t) {
+				t.printStackTrace();
+			}
+		} else if (id == R.id.btnReset) {// Сброс параметров запуска
+			handler.post(resetMessage);
+		} else if (id == R.id.btnCancel) {// Закрытие мидлета настройки
+			myMidlet.notifyDestroyed();
 		} else {
 			return;
 		}
 
 		if (presetListener != null) {
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			AlertDialog.Builder builder = new AlertDialog.Builder(context);
 			builder.setTitle(getString(R.string.SIZE_PRESETS));
 			builder.setItems(presets, presetListener);
 
 			AlertDialog alert = builder.create();
 			alert.show();
 		} else if (colorListener != null) {
-			AmbilWarnaDialog dialog = new AmbilWarnaDialog(this,
+			AmbilWarnaDialog dialog = new AmbilWarnaDialog(context,
 					color | 0xFF000000, colorListener);
 			dialog.show();
 		}
 	}
 
 	private MIDlet loadMIDlet() {
-		// Не работает, т.к. класс Class уже к этому моменту загружен в DVM
-		/*
-		 * ClassPool cpool = ClassPool.getDefault(this);
-		 * cpool.appendSystemPath(this); try { CtClass ctClass =
-		 * cpool.get("java.lang.Class"); CtMethod ctMethod =
-		 * ctClass.getDeclaredMethod("getResourceAsStream");
-		 * ctMethod.setBody("{ return getResourceAsStream($1); }");
-		 * ctClass.toClass(); } catch (NotFoundException e) {
-		 * e.printStackTrace(System.err); } catch (CannotCompileException e) {
-		 * e.printStackTrace(System.err); }
-		 */
 
 		MIDlet midlet = null;
-		TreeMap<String, String> params = FileUtils.loadManifest(new File(
-				pathToMidletDir + MIDLET_CONF_FILE));
-		MIDlet.initProps(params);
-		String dex = pathToMidletDir + ConfigActivity.MIDLET_DEX_FILE;
+		String appDir = app.getPath();
+		TreeMap<String, String> p = FileUtils.loadManifest(new File(appDir
+				+ MIDLET_CONF_FILE));
+		MIDlet.initTempProps(p); // для доступности в конструкторе
+		String dex = appDir + ConfScreen.MIDLET_DEX_FILE;
 		ClassLoader loader = new MyClassLoader(dex,
-				getApplicationInfo().dataDir, null, getClassLoader(), pathToMidletDir + MIDLET_RES_DIR);
+				context.getApplicationInfo().dataDir, null,
+				context.getClassLoader(), appDir + MIDLET_RES_DIR);
 		try {
-			String mainClassParam = params.get("MIDlet-1");
+			String mainClassParam = p.get("MIDlet-1");
 			String mainClass = mainClassParam.substring(
 					mainClassParam.lastIndexOf(',') + 1).trim();
 			Log.d("inf", "load main: " + mainClass + " from dex:" + dex);
-			midlet = (MIDlet) loader.loadClass(mainClass).newInstance();// Тут
-																		// вызывается
-																		// конструктор
-																		// по
-																		// умолчанию.
+			// Тут вызывается конструктор по умолчанию.
+			midlet = (MIDlet) loader.loadClass(mainClass).newInstance();
+			midlet.setProps(p);
 		} catch (ClassNotFoundException ex) {
 			Log.d("err", ex.toString() + "/n" + ex.getMessage());
 		} catch (InstantiationException ex) {
@@ -705,6 +598,15 @@ public class ConfigActivity extends MicroActivity implements CommandListener,
 			Log.d("err", ex.toString() + "/n" + ex.getMessage());
 		}
 		return midlet;
+	}
+
+	@Override
+	public void clearDisplayableView() {
+		view = null;
+	}
+	
+	public String getAppDir() {
+		return app.getPath();
 	}
 
 }

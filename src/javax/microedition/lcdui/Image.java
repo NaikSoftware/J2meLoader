@@ -25,8 +25,12 @@ import javax.microedition.util.ContextHolder;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+
 import java.io.FileInputStream;
-import javax.microedition.shell.ConfigActivity;
+
+import javax.microedition.shell.ConfScreen;
+
+import ua.naiksoftware.j2meloader.AppsListFragment;
 
 public class Image
 {
@@ -75,7 +79,7 @@ public class Image
 			resname = resname.substring(1);
 		}
 		
-		InputStream is = new FileInputStream(ConfigActivity.pathToMidletDir + ConfigActivity.MIDLET_RES_DIR + resname);
+		InputStream is = new FileInputStream(AppsListFragment.getCurrConf().getAppDir() + ConfScreen.MIDLET_RES_DIR + resname);
 		Bitmap bitmap = BitmapFactory.decodeStream(is);
 		is.close();
 		

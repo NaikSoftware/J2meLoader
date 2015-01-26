@@ -8,7 +8,7 @@ import android.os.AsyncTask;
 import android.widget.Toast;
 import com.android.dx.command.Main;
 import filelog.Log;
-import javax.microedition.shell.ConfigActivity;
+import javax.microedition.shell.ConfScreen;
 import ua.naiksoftware.util.FileUtils;
 
 public class JarConverter extends AsyncTask<String, String, Boolean> {
@@ -63,17 +63,17 @@ public class JarConverter extends AsyncTask<String, String, Boolean> {
 		Main.main(new String[] {
 				"--dex",
 				"--output=" + appConverted.getPath()
-						+ ConfigActivity.MIDLET_DEX_FILE,
+						+ ConfScreen.MIDLET_DEX_FILE,
 				/* dirForJAssist.getPath() */pathToJar });
 		File conf = new File(dirTmp, "/META-INF/MANIFEST.MF");
 		if (!conf.exists()) {
 			err = "Manifest not exists: " + conf.getPath();
 			return false;
 		}
-		conf.renameTo(new File(appConverted, ConfigActivity.MIDLET_CONF_FILE));
+		conf.renameTo(new File(appConverted, ConfScreen.MIDLET_CONF_FILE));
 		// Extract other resources from jar.
 		FileUtils.moveFiles(dirTmp.getPath(), pathConverted + appDir
-				+ ConfigActivity.MIDLET_RES_DIR, new FilenameFilter() {
+				+ ConfScreen.MIDLET_RES_DIR, new FilenameFilter() {
 			public boolean accept(File dir, String fname) {
 				if (fname.equalsIgnoreCase("MANIFEST.MF")
 						|| fname.endsWith(".class")) {

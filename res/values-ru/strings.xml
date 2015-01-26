@@ -4,7 +4,9 @@
     <string name="convert_complete">Завершено</string>
 	<string name="author">Автор: </string>
 	<string name="version">Версия: </string>
+	<string name="no_data_for_display">нет данных для отображения</string>
     
+	<string name="config_title">Настройки запуска</string>
     <string formatted="false" name="PREF_SCREEN_OPTIONS">Параметры экрана</string>
     <string formatted="false" name="PREF_SCALE_TO_FIT">Масштабировать</string>
     <string formatted="false" name="PREF_KEEP_ASPECT_RATIO">Сохранять пропорции</string>

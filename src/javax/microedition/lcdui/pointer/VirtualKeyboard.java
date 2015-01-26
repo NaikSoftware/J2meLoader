@@ -20,6 +20,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import javax.microedition.lcdui.Canvas;
+import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
@@ -370,7 +371,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
                 setSnap(KEY_SOFT_RIGHT, KEY_NUM0, RectSnap.RIGHT_HCENTER | RectSnap.SNAP_BOTTOM);
                 setSnap(KEY_SOFT_LEFT, KEY_SOFT_RIGHT, RectSnap.EXT_WEST);
 
-                keySize = Math.max(ContextHolder.getDisplayWidth(), ContextHolder.getDisplayHeight()) / 12;
+                keySize = Math.max(Display.getWidth(), Display.getHeight()) / 12;
                 float keyOffset = keySize * (keyScales[SCALE_JOYSTICK] * 3 - keyScales[SCALE_FIRE_KEY]) / 2;
 
                 snapOrigins[KEY_FIRE] = SCREEN;

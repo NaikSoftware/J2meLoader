@@ -18,11 +18,9 @@ package javax.microedition.lcdui;
 
 import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.midlet.MIDlet;
-
-import ua.naiksoftware.j2meloader.R;
-
 import javax.microedition.util.ContextHolder;
 
+import ua.naiksoftware.j2meloader.R;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -71,7 +69,7 @@ public class MicroActivity extends Activity implements Handler.Callback
 		}
 		else
 		{
-			ContextHolder.notifyPaused();
+//			ContextHolder.notifyPaused();
 		}
 	}
 	
@@ -128,20 +126,20 @@ public class MicroActivity extends Activity implements Handler.Callback
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		ContextHolder.addActivityToPool(this);
+		//ContextHolder.addActivityToPool(this);
 	}
 	
 	public void onResume()
 	{
 		super.onResume();
 		
-		ContextHolder.setCurrentActivity(this);
+		//ContextHolder.setCurrentActivity(this);
 		visible = true;
 	}
 	
 	public void onPause()
 	{
-		ContextHolder.setCurrentActivity(null);
+		//.setCurrentActivity(null);
 		visible = false;
 		
 		super.onPause();
@@ -154,7 +152,7 @@ public class MicroActivity extends Activity implements Handler.Callback
 			current.setParentActivity(null);
 		}
 		
-		ContextHolder.compactActivityPool(this);
+		//ContextHolder.compactActivityPool(this);
 		
 		super.onDestroy();
 	}
@@ -207,14 +205,14 @@ public class MicroActivity extends Activity implements Handler.Callback
 							{
 								try
 								{
-									MIDlet.callDestroyApp(true);
+									//MIDlet.callDestroyApp(true);
 								}
 								catch(Throwable ex)
 								{
 									ex.printStackTrace();
 								}
 								
-								ContextHolder.notifyDestroyed();
+								//ContextHolder.notifyDestroyed();
 							}
 						};
 						

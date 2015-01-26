@@ -15,7 +15,9 @@
     
     <string name="converting_wait">Converting JAR #8230;</string>
     <string name="convert_complete">Complete</string>
+    <string name="no_data_for_display">No data for display</string>
     
+    <string name="config_title">Run configuration</string>
     <string formatted="false" name="PREF_SCREEN_OPTIONS">Screen options</string>
     <string formatted="false" name="PREF_SCALE_TO_FIT">Scale to fit</string>
     <string formatted="false" name="PREF_KEEP_ASPECT_RATIO">Keep aspect ratio</string>

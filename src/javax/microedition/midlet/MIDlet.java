@@ -19,46 +19,76 @@ import java.util.Locale;
 import java.util.TreeMap;
 
 import javax.microedition.io.ConnectionNotFoundException;
+import javax.microedition.lcdui.Display;
+import javax.microedition.lcdui.Displayable;
 import javax.microedition.util.ContextHolder;
 
+import ua.naiksoftware.j2meloader.AppItem;
 import android.content.ActivityNotFoundException;
-import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.net.Uri;
-import android.os.Bundle;
 
 public class MIDlet {
 
-	private static Context context;
-	private static TreeMap<String, String> properties;
-	private static Locale locale;
+	private static TreeMap<String, String> tempProps;
+	private TreeMap<String, String> props;
+	private AppItem app;
 
-	private static boolean pauseAppCalled = false;
-	private static boolean destroyAppCalled = false;
+	/**
+	 * Для первоначальной инициализации мидлета, чтобы в конструкторе оболочка
+	 * уже была готова работать с этим мидлетом.
+	 */
+	{
+		Display.addDisplay(this);
+		Display.getDisplay(this).setCurrent(defaultDisplayable);
+	}
 
-	public void start() {
-		// createApp();
-		// initApp();
+	/**
+	 * Запуск мидлета
+	 * 
+	 * @param app
+	 */
+	public void start(AppItem app) {
+		this.app = app;
+		ContextHolder.getActivity().setTitle(
+				app.getTitle() + " " + app.getVersion());
 		startApp();
 	}
 
-	public static void setMidletContext(Context c) {
-		context = c;
-		ContextHolder.setContext(context);
+	/**
+	 * Установка временных параметров мидлета из его манифеста. Нужно для их
+	 * доступности в конструкторе по умолчанию, который вызывается через
+	 * рефлексию. После инициализации мидлета нужно установить эти же параметры
+	 * с помощью {@link #setProps(TreeMap)}
+	 * 
+	 * @param p
+	 */
+	public static void initTempProps(TreeMap<String, String> p) {
+		tempProps = p;
 	}
 
-	public static Context getMidletContext() {
-		return context;
-	}
-
-	public static void initProps(TreeMap<String, String> p) {
-		properties = p;
+	/**
+	 * @see {@link #initTempProps(TreeMap)}
+	 * @param p
+	 */
+	public void setProps(TreeMap<String, String> p) {
+		this.props = p;
 	}
 
 	public String getAppProperty(String key) {
-		return properties.get(key);
+		if (props == null) {
+			return tempProps.get(key);
+		} else {
+			return props.get(key);
+		}
+	}
+
+	/**
+	 * Вызывается каждый раз, когда мидлет становится активным: при запуске, при
+	 * восстановлении из свернутого состояния, ... Не вызывайте напрямую этот
+	 * метод! Для запуска мидлета вызывайте {@link #start(AppItem)}
+	 */
+	public void startApp() {
 	}
 
 	/**
@@ -68,72 +98,24 @@ public class MIDlet {
 	 * Вызовы этого метода из pauseApp() игнорируются.
 	 */
 	public final void notifyPaused() {
-		if (!pauseAppCalled) {
-			ContextHolder.notifyPaused();
-		}
+		// if (!pauseAppCalled) {
+		// ContextHolder.notifyPaused();
+		// }
 	}
 
 	/**
-	 * Сообщить оболочке, что мидлет завершил работу. При этом оболочка будет
-	 * закрыта.
-	 *
-	 * Вызовы этого метода из destroyApp() игнорируются.
+	 * Сообщить оболочке, что мидлет завершил работу. При этом экран мидлета
+	 * будет удален.
 	 */
 	public final void notifyDestroyed() {
-		if (!destroyAppCalled) {
-			ContextHolder.notifyDestroyed();
-		}
-	}
-
-	/**
-	 * Вызывается в самом начале запуска оболочки, когда создается объект
-	 * Application.
-	 *
-	 * В частности, этот метод вызывается перед созданием Activity.
-	 * Соответственно, если конфигурирование оболочки происходит через
-	 * ConfigActivity, то в момент вызова этого метода состояние оболочки еще не
-	 * определено: виртуальный экран имеет нулевой размер, размеры шрифтов не
-	 * скорректированы, ...
-	 */
-	public void createApp() {
-	}
-
-	/**
-	 * Вызывается при передаче управления мидлету.
-	 *
-	 * Этот метод следует использовать вместо конструктора класса мидлета для
-	 * его инициализации.
-	 *
-	 * Если конфигурирование оболочки происходит через ConfigActivity, то в
-	 * момент вызова этого метода состояние оболочки полностью определено:
-	 * виртуальный экран имеет указанный пользователем размер, размеры шрифтов
-	 * скорректированы в соответствии с разрешением экрана, ...
-	 */
-	public/* abstract */void initApp() {
-	}
-
-	/**
-	 * Вызывается каждый раз, когда мидлет становится активным: при запуске
-	 * после initApp(), при восстановлении из свернутого состояния, ...
-	 */
-	public/* abstract */void startApp() {
+		Display.removeDisplay(this);
 	}
 
 	/**
 	 * Вызывается каждый раз, когда мидлет становится на паузу: при сворачивании
 	 * в фоновый режим, ...
 	 */
-	public/* abstract */void pauseApp() {
-	}
-
-	/**
-	 * Корректно вызвать pauseApp(). Во время выполнения этого метода вызовы
-	 * notifyPaused() игнорируются.
-	 */
-	public final void callPauseApp() {
-		pauseAppCalled = true;
-		pauseApp();
-		pauseAppCalled = false;
+	public void pauseApp() {
 	}
 
 	/**
@@ -143,74 +125,31 @@ public class MIDlet {
 	 *            флаг безусловного завершения, для Android не имеет особого
 	 *            смысла
 	 */
-	public static/* abstract */void destroyApp(boolean unconditional) {
-	}
-
-	/**
-	 * Корректно вызвать destroyApp(). Во время выполнения этого метода вызовы
-	 * notifyDestroyed() игнорируются.
-	 *
-	 * @param unconditional
-	 *            флаг безусловного завершения, для Android не имеет особого
-	 *            смысла
-	 */
-	public static final void callDestroyApp(boolean unconditional) {
-		destroyAppCalled = true;
-		destroyApp(unconditional);
-		destroyAppCalled = false;
-	}
-
-	public static void setLocale(String language) {
-		locale = new Locale(language);
-		updateConfiguration();
+	public static void destroyApp(boolean unconditional) {
 	}
 
 	public static String getDefaultLocale() {
 		return Locale.getDefault().getCountry();
 	}
 
-	public static void updateConfiguration() {
-		Resources res = context.getResources();
-		Configuration conf = res.getConfiguration();
-
-		if (locale != null) {
-			conf.locale = locale;
-		}
-
-		res.updateConfiguration(conf, res.getDisplayMetrics());
-	}
-
-	// @Override
-	// public void onConfigurationChanged(Configuration conf) {
-	// updateConfiguration();
-	// }
-
-	public void startActivity(Class cls) {
-		Intent i = new Intent(context, cls);
-		context.startActivity(i);
-	}
-
-	public void startActivity(Class cls, Bundle bundle) {
-		Intent intent = new Intent(context, cls);
-
-		intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-		// intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-		if (bundle != null) {
-			intent.putExtras(bundle);
-		}
-
-		context.startActivity(intent);
-	}
-
 	public boolean platformRequest(String url)
 			throws ConnectionNotFoundException {
 		try {
-			context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+			ContextHolder.getContext().startActivity(
+					new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
 		} catch (ActivityNotFoundException e) {
 			throw new ConnectionNotFoundException();
 		}
 
 		return true;
 	}
+
+	public AppItem getAppItem() {
+		return app;
+	}
+
+	private static Displayable defaultDisplayable = new Displayable() {
+		// default implementation
+	};
+
 }

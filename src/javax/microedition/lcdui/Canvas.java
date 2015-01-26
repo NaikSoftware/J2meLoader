@@ -452,8 +452,8 @@ public abstract class Canvas extends Displayable {
 	private Overlay overlay;
 
 	public Canvas() {
-		displayWidth = ContextHolder.getDisplayWidth();
-		displayHeight = ContextHolder.getDisplayHeight();
+		displayWidth = Display.getWidth();
+		displayHeight = Display.getHeight();
 		Log.d("Canvas", "Constructor. w=" + displayWidth + " h=" + displayHeight);
 
 		updateSize(false);
